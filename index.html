@@ -3942,6 +3942,7 @@ function scaleLinearFields(obj, s) {
 }
 
 function save() {
+  if (document.body.classList.contains("tour")) return; // view-only: never overwrite the viewer's own rooms
   try {
     pushActiveToDoc();
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -5862,6 +5863,8 @@ const Room3D = (() => {
 })();
 
 // boot
+let freshVisitor = true;
+try { freshVisitor = !localStorage.getItem(STORAGE_KEY); } catch {}
 buildCatalog();
 load();
 if (!state.rooms.length) {
@@ -5877,6 +5880,23 @@ refreshInspector();
 draw();
 if (location.hash === "#3d") setView("3d");
 if (location.hash === "#tour") startTour();
+// Shared links: tour mode and first-time visitors get the published layouts straight from the file
+if (location.hash === "#tour" || freshVisitor) loadSharedLayouts();
+
+async function loadSharedLayouts() {
+  try {
+    const res = await fetch("mucha-layouts.json", { cache: "no-cache" });
+    if (!res.ok) return;
+    const { rooms } = await res.json();
+    if (!rooms?.length) return;
+    state.rooms = rooms;
+    state.activeRoomId = rooms[0].id;
+    pullActiveFromDoc();
+    afterRoomSwitch();
+  } catch (e) {
+    console.warn("Shared layouts unavailable", e);
+  }
+}
 
 function startTour() {
   document.body.classList.add("tour");
