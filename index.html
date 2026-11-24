@@ -5879,6 +5879,8 @@ resizeCanvas();
 refreshInspector();
 draw();
 if (location.hash === "#3d") setView("3d");
+// Phones opening the bare address get the tour too; the editor needs a big screen
+if (!location.hash && matchMedia("(pointer: coarse)").matches) history.replaceState(null, "", "#tour");
 if (location.hash === "#tour") startTour();
 // Shared links: tour mode and first-time visitors get the published layouts straight from the file
 if (location.hash === "#tour" || freshVisitor) loadSharedLayouts();
